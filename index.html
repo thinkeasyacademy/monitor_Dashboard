@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>📊 Website Logs by User</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 1000px; margin: auto; }
+    input { padding: 5px; margin: 5px 10px 5px 0; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    tr:hover { background-color: #f1f1f1; }
+  </style>
+</head>
+<body>
+  <h2>🌐 Website Log Dashboard – Search by User Name</h2>
+
+  🔍 <label>Search User Name:</label>
+  <input type="text" id="searchBox" oninput="filterTable()" placeholder="e.g. Rakib">
+
+  📅 From:
+  <input type="date" id="fromDate" onchange="filterTable()">
+  
+  To:
+  <input type="date" id="toDate" onchange="filterTable()">
+
+  <table id="logTable">
+    <thead><tr id="headerRow"></tr></thead>
+    <tbody id="logBody"></tbody>
+  </table>
+
+  <script>
+    const sheetURL = "https://docs.google.com/spreadsheets/d/1pcJqSJk8Y9vyrIFj1pVu55M4Zcgj7pA24Z86jeEzN0U/gviz/tq?tqx=out:json";
+    let rawData = [];
+
+    function fetchData() {
+      fetch(sheetURL)
+        .then(res => res.text())
+        .then(text => JSON.parse(text.substr(47).slice(0, -2)))
+        .then(json => {
+          const cols = json.table.cols.map(c => c.label);
+          const rows = json.table.rows.map(r => {
+            const obj = {};
+            cols.forEach((key,i)=>obj[key]=r.c[i]?.v||"");
+            return obj;
+          });
+          rawData = rows;
+          filterTable();
+        });
+    }
+
+    function renderTable(data, headers) {
+      document.getElementById("headerRow").innerHTML =
+        headers.map(h=>`<th>${h}</th>`).join("");
+      document.getElementById("logBody").innerHTML =
+        data.map(row=>`<tr>${headers.map(h=>`<td>${row[h]}</td>`).join("")}</tr>`).join("");
+    }
+
+    function setDefaultDates() {
+      let to = new Date(), from = new Date();
+      from.setDate(to.getDate() - 3);
+      document.getElementById("toDate").value = to.toISOString().split("T")[0];
+      document.getElementById("fromDate").value = from.toISOString().split("T")[0];
+    }
+
+    function filterTable() {
+      const keyword = document.getElementById("searchBox").value.toLowerCase();
+      const from = new Date(document.getElementById("fromDate").value);
+      const to = new Date(document.getElementById("toDate").value);
+
+      const filtered = rawData.filter(row => {
+        let matchesKeyword = true;
+        if (keyword) {
+          const nameField = String(row["Name"] || row["User"] || row["Username"] || "");
+          matchesKeyword = nameField.toLowerCase().includes(keyword);
+        }
+
+        const dateStr = row["Date"] || row["date"] || "";
+        const d = new Date(dateStr);
+        const matchesDate = !isNaN(d) && d >= from && d <= to;
+        return matchesKeyword && matchesDate;
+      });
+
+      if (filtered.length > 0) {
+        renderTable(filtered, Object.keys(filtered[0]));
+      } else {
+        document.getElementById("logBody").innerHTML =
+          "<tr><td colspan='100%'>No matching logs found</td></tr>";
+      }
+    }
+
+    // initialize
+    setDefaultDates();
+    fetchData();
+    setInterval(fetchData, 60000); // Refresh every 60 seconds
+  </script>
+</body>
+</html>

@@ -40,7 +40,7 @@
           const cols = json.table.cols.map(c => c.label);
           const rows = json.table.rows.map(r => {
             const obj = {};
-            cols.forEach((key,i)=>obj[key]=r.c[i]?.v||"");
+            cols.forEach((key, i) => obj[key] = r.c[i]?.v || "");
             return obj;
           });
           rawData = rows.filter(r => r["Login Time"]); // remove rows without Login Time
@@ -49,9 +49,9 @@
     }
 
     function renderTable(data, headers) {
-      document.getElementById("headerRow").innerHTML = headers.map(h=>`<th>${h}</th>`).join("");
+      document.getElementById("headerRow").innerHTML = headers.map(h => `<th>${h}</th>`).join("");
       document.getElementById("logBody").innerHTML =
-        data.map(row=>`<tr>${headers.map(h=>`<td>${row[h]}</td>`).join("")}</tr>`).join("");
+        data.map(row => `<tr>${headers.map(h => `<td>${row[h]}</td>`).join("")}</tr>`).join("");
     }
 
     function setDefaultDates() {

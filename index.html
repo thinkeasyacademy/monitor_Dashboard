@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>📊 Website Logs by User</title>
+  <title>📊 Website Logs by Username</title>
   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 1000px; margin: auto; }
     input { padding: 5px; margin: 5px 10px 5px 0; }
@@ -13,14 +13,13 @@
   </style>
 </head>
 <body>
-  <h2>🌐 Website Log Dashboard – Search by User Name</h2>
+  <h2>🌐 Website Log Dashboard – Search by Username</h2>
 
-  🔍 <label>Search User Name:</label>
-  <input type="text" id="searchBox" oninput="filterTable()" placeholder="e.g. Rakib">
+  🔍 <label>Search Username:</label>
+  <input type="text" id="searchBox" oninput="filterTable()" placeholder="e.g. Tafhim">
 
   📅 From:
   <input type="date" id="fromDate" onchange="filterTable()">
-  
   To:
   <input type="date" id="toDate" onchange="filterTable()">
 
@@ -44,14 +43,13 @@
             cols.forEach((key,i)=>obj[key]=r.c[i]?.v||"");
             return obj;
           });
-          rawData = rows;
+          rawData = rows.filter(r => r["Login Time"]); // remove rows without Login Time
           filterTable();
         });
     }
 
     function renderTable(data, headers) {
-      document.getElementById("headerRow").innerHTML =
-        headers.map(h=>`<th>${h}</th>`).join("");
+      document.getElementById("headerRow").innerHTML = headers.map(h=>`<th>${h}</th>`).join("");
       document.getElementById("logBody").innerHTML =
         data.map(row=>`<tr>${headers.map(h=>`<td>${row[h]}</td>`).join("")}</tr>`).join("");
     }
@@ -69,27 +67,21 @@
       const to = new Date(document.getElementById("toDate").value);
 
       const filtered = rawData.filter(row => {
-        let matchesKeyword = true;
-        if (keyword) {
-          const nameField = String(row["Name"] || row["User"] || row["Username"] || "");
-          matchesKeyword = nameField.toLowerCase().includes(keyword);
-        }
-
-        const dateStr = row["Date"] || row["date"] || "";
-        const d = new Date(dateStr);
-        const matchesDate = !isNaN(d) && d >= from && d <= to;
-        return matchesKeyword && matchesDate;
+        const name = String(row["Username"] || "").toLowerCase();
+        const timeStr = row["Login Time"] || "";
+        const time = new Date(timeStr);
+        const matchName = name.includes(keyword);
+        const matchDate = !isNaN(time) && time >= from && time <= to;
+        return matchName && matchDate;
       });
 
       if (filtered.length > 0) {
         renderTable(filtered, Object.keys(filtered[0]));
       } else {
-        document.getElementById("logBody").innerHTML =
-          "<tr><td colspan='100%'>No matching logs found</td></tr>";
+        document.getElementById("logBody").innerHTML = "<tr><td colspan='100%'>No matching logs found</td></tr>";
       }
     }
 
-    // initialize
     setDefaultDates();
     fetchData();
     setInterval(fetchData, 60000); // Refresh every 60 seconds
